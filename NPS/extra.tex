@@ -1,0 +1,33 @@
+%% Extra Work I may need
+
+\section{MCMC Sampling}
+Markov Chain Monte Carlo (MCMC) methods such as Gibbs sampling are used to perform posterior inference for DPMMs. The goal is to approximate the posterior distribution over cluster assignments and model parameters by iteratively updating each component, conditioned on the current state of the remaining variables with a Markov chain that has the posterior as its equilibrium distribution.\cite{neal2000markov}
+
+Let \( x_1, \dots, x_n \) represent observations drawn from a mixture model with latent cluster assignments \( z_1, \dots, z_n \). The prior distribution over cluster weights follows a standard \( DP(\alpha, G_0) \), where \( \alpha \) is the concentration parameter and \( G_0 \) is the base distribution.
+
+Given \( n \) data points, the posterior probability of assigning a new observation \( x_{n+1} \) to cluster \( k \) or creating a new cluster is expressed as:
+\[
+P(z_{n+1} = k | x_{n+1}, z_{-n}, \phi_{1:K}) \propto
+\begin{cases}
+m_k f(x_{n+1} | \phi_k) & \text{if } k \leq K \\
+\alpha \int_{\Omega} f(x_{n+1} | \phi) H(d\phi) & \text{if } k = K+1
+\end{cases}
+\]
+where: \( m_k \) is the number of data points currently assigned to cluster \( k \), \( f(x | \phi_k) \) represents the likelihood of \( x \) given cluster parameters \( \phi_k \), \( \alpha \) controls the probability of creating a new cluster and \( \phi_k \sim G_0 \) are cluster-specific parameters.\cite{neal2000markov}
+After assigning data points to clusters, the cluster-specific parameters \( \phi_k \) are updated by drawing from the posterior:
+\[
+\phi_k | z, x \sim P(\phi_k | x_{z=k}, G_0),
+\]
+where \( x_{z=k} \) represents the subset of data points assigned to cluster \( k \).\cite{neal2000markov}
+
+The validity of MCMC sampling for DPMMs stems from Markov chain simulations yielding the posterior distribution as its equilibrium state.\cite{neal2000markov} Gibbs sampling is one of the simplest MCMC methods, and it generates an ergodic Markov chain that converges to the posterior.\cite{neal2000markov} It works by decomposing the joint posterior into conditionally independent distributions, allowing efficient iterative sampling. Repeated updates of cluster assignments and parameters mean the Markov chain eventually converges to the actual posterior distribution of cluster configurations and mixture components.
+
+Simulating this Markov chain for a sufficient number of iterations ensures that samples from the chain approximate the posterior expectation:
+\[
+E[f(x)] \approx \frac{1}{T} \sum_{t=1}^{T} f(x^{(t)}),
+\]
+where \( T \) represents the number of post-burn-in samples.\cite{neal2000markov} 
+\newline This sampling scheme is essential for Bayesian non-parametric clustering using DPMMs.
+
+%%Useful Quotes
+ The DPMM posterior density estimates provide a non-parametric view of the return distribution, highlighting areas of high probability mass that reflect potential market regimes.\cite{perrakis2024nonparametric}
