@@ -1,0 +1,179 @@
+---
+title: "Nonparametric Statistics IV"
+subtitle: "Practical 6"
+author: "Jochen Einbeck"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Kernel density estimation
+
+We consider annual measurements of the level, in feet, of Lake Huron between 1875 and 1972.
+
+```{r data, message=FALSE}
+data(LakeHuron)
+```
+
+Using the default options of both `hist` and `density`, produce a histogram and overlay a kernel density estimator.  (*Note*: For the histogram, this of course still requires you to use `freq=FALSE` as otherwise the two results do not reside on the same scale.)
+
+```{r}
+# ...
+
+```
+
+Inspect the fitted object for the kernel density estimate. What is the value of the bandwidth used?  Confirm that we get the same bandwidth when using the function `h.sil` from the lecture.
+
+```{r}
+# This is the function from the lecture
+h.sil<- function(data){
+  data<-na.omit(data)
+  n<-length(data)
+  sigma<-min(sd(data), IQR(data)/1.34)
+  hopt<- 0.9*sigma*n^(-1/5)
+  return(hopt)
+}
+```
+
+```{r}
+# ...
+
+```
+
+Produce a grid of values ranging from 575 to 583, in steps of 0.1, and then use the function  `est.density` from the lecture to estimate the density on that grid, using the bandwidth just computed above. Overlay the estimated density on the already created plot (ideally in a different color but with a dashed line) to confirm that the results  of the two density estimates are identical.
+
+```{r}
+# This is the function from the lecture
+est.density<- function(data, xgrid=data, h=1, kernel="gauss"){
+  my.kernel<- switch(kernel, 
+                     "gauss"= function(x){dnorm(x)},
+                     "epa"=function(x){x<- 3/4*(1-x^2)*ifelse(abs(x)<=1,1,0)},
+                     "uni"=function(x){x<- 1/2*ifelse(abs(x)<=1,1,0)}   
+  )
+  data<-na.omit(data)
+  n<-length(data)
+  g<-length(xgrid)
+  est<-rep(0, g)
+  denom<- n*h
+  for (j in 1:g){
+    num<- sum(my.kernel((data-xgrid[j])/h))
+    est[j]<- num/denom
+  }  
+  return(est)
+}
+```
+
+
+```{r}
+# lake.grid<- 
+# lake.dens<- est.density(...)
+# ...
+
+```
+
+
+
+## Simulation from an estimated density
+
+While kernel density estimation can be a nice tool for descriptive analysis and visualization purposes, in practical applications one may want to go a step further and *use* the estimated density, for instance in order to generate new data from it.  In principle one can use both inverse sampling and rejection sampling to do this, but the approach via rejection sampling is a bit more elegant (and also can be easier extended to multivariate densities).   
+
+So, let's do this -- build a rejection sampler from a given kernel density estimate. If you believe you need a quick recap on rejection sampling, please check the [DSSC notes](https://www.louisaslett.com/Courses/DSSC_2023/notes/simulation.html#rejection-sampling). We will tailor the method to be used in conjunction with our own function, `est.density`.  Before we do this, please just make a tiny amendment to that function, so that it returns both the used grid and the density estimate. So, in the code for `est.density`, pleae replace `return(est)` by `return(as.data.frame(cbind(xgrid, est)))`.
+  
+```{r}
+# est.density<- function(data, xgrid=data, h=1, kernel="gauss"){
+# ...
+  
+# }
+```
+
+To test this slightly amended function, repeat the last chunk from the previous section (the one with the overlaid densities) -- the last line in that chunk is now a bit simpler as we can apply the `lines()` function directly on the estimated object. 
+
+```{r}
+# ...
+
+```
+
+Now, to implement rejection sampling for an estimated KDE, we will create a "box" around our density estimate, with height corresponding to the maximum value of the density estimate. In principle, the ends of the box should be situated at positions so that they correspond to the "support" of the density, that is the interval between the first and last value of the grid associated with non-zero density estimates. However, for a Gaussian kernel, the density values will never be exactly zero, so let us make the simpler choice that we always use the entire grid range provided by `est.density`. 
+
+We will proceed with building a function `kde.reject` which will initially take an object `kde` produced by `est.density`, and will
+
+- identify the minimum and maximum value of the used grid (call these `x.min` and `x.max`);
+- identify the maximum value of the density estimate (`y.max`).
+
+Then we will need a `counter` for the number of samples already produced. As long as the value of this counter is less than the number of samples required, we
+
+- propose a uniform sample from the support (`x.min, x.max`), which we call `x.sim`;
+- produce a uniform sample in (0,`y.max`), which we call `y.sim`;
+- compute the KDE at the identified value `x.sim` (this is actually a bit tricky, as our original density estimate most likely has not been evaluated on exactly this point. Therefore we interpolate it from estimates at neighboring grid points; the code for this step is already provided below).
+- if that sample is less than the computed KDE, accept it. Otherwise reject it, and propose a new uniform sample from the support....
+
+```{r}
+
+# kde.reject<- function(kde, n){
+  
+# x.min <- min(kde$xgrid)
+# x.max <- ...
+# y.max <- ...        # Highest KDE value    
+  
+# samples<-rep(0, n)    # empty vector into which to place the drawn samples
+# count   <- 0            # Counter for accepted samples
+
+# while (count < n) {
+ 
+  # x.sim <- 
+  
+  # y.sim <-
+  
+  # y.dens <- approx(kde$xgrid, kde$est, xout = x.sim)$y
+  
+  # Accept the sample if it falls below the KDE curve
+  # if (...) {
+    # count <- count + 1
+    # samples[count] <- x.sim
+#  }
+# }
+
+# return(samples)
+# }
+```
+
+Now try out this function: Simulate a single data set of size 100.  
+
+```{r}
+# sim1 <- kde.reject(lake.dens, 100)
+```
+
+Using either `density` or `est.density` as you prefer, but in either case using Silverman's bandwidth, visualize a density estimate of these simulated data.
+
+```{r}
+# ...
+```
+
+Now repeat this procedure a few times, each time plotting the original density estimate, and the one arising from the resampled estimates (again use `density` or `est.density` for this as you like, but make sure Silverman's bandwidth is recomputed for each resampled dataset.) Do they look reasonably similar?
+
+```{r}
+# ...
+
+```
+
+
+Adjust the above code so that at each time a density is estimated, it also records the bandwidth of the re-estimated density. Run at least 50 iterations, and then produce an appropriate graphical summary (may be a histogram, or a density estimate...) **of the resulting optimal bandwidth values**. Interpret the results.
+
+
+```{r}
+# ...
+
+```
+
+```{r}
+# ...
+
+```
+
+
+
+
+
