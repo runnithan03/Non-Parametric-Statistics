@@ -1,8 +1,3 @@
----
-title: "Non-Parametric Statistics"
-output: github_document
----
-
 # Non-Parametric Statistics
 
 This repository contains coursework and projects for the Nonparametric Statistics IV module at Durham University, across both Michaelmas and Epiphany terms. It includes hands-on exploration of resampling techniques, Bayesian methods, kernel smoothing, and local polynomial regression, all implemented in **R**.
