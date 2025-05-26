@@ -48,9 +48,9 @@ This repository contains coursework and projects for the Nonparametric Statistic
     - A simulation-based (bootstrap) method using residual resampling
   - Compare both approaches visually and via average CI width
 - **Key Equations:**
-  - LL estimator: \(\hat{m}(x)\)
-  - Bias: \(\frac{1}{2}h^2 m''(x)\mu_2\)
-  - Variance: \(\frac{\sigma^2 \nu_0}{nhf(x)}\)
+  - LL estimator: `m̂(x)`
+  - Bias: (1/2) · h² · m″(x) · μ₂
+  - Variance: σ² · ν₀ / (n · h · f(x))
 - **Tools:** `locpol`, `SemiPar`, `density()`, custom KDE and LL functions
 
 ### 📚 Lecture & Report Files
